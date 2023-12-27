@@ -1,9 +1,6 @@
 import random
-import numpy as np
-import pandas as pd
 import gym
-import matplotlib.pyplot as plt
-
+import numpy as np
 from kaggle_environments import make, evaluate
 from gym import spaces
 
@@ -41,3 +38,28 @@ class ConnectFourGym(gym.Env):
         else: # End the game and penalize agent
             reward, done, _ = -10, True, {}
         return np.array(self.obs['board']).reshape(1,self.rows,self.columns), reward, done, _
+
+def get_win_percentages(agent1, agent2, n_rounds=100):
+    # Use default Connect Four setup
+    config = {'rows': 6, 'columns': 7, 'inarow': 4}
+    # Agent 1 goes first (roughly) half the time          
+    outcomes = evaluate("connectx", [agent1, agent2], config, [], n_rounds//2)
+    # Agent 2 goes first (roughly) half the time      
+    outcomes += [[b,a] for [a,b] in evaluate("connectx", [agent2, agent1], config, [], n_rounds-n_rounds//2)]
+    win_percentage = np.round(outcomes.count([1,-1])/len(outcomes), 2)
+    return win_percentage
+
+### Generate new agent function using model
+def build_agent(model):
+    def _function(obs, config):
+        # Use the best model to select a column
+        col, _ = model.predict(np.array(obs['board']).reshape(1, config.rows, config.columns))
+        # Check if selected column is valid
+        is_valid = (obs['board'][int(col)] == 0)
+        # If not valid, select random move. 
+        if is_valid:
+            return int(col)
+        else:
+            return random.choice([col for col in range(config.columns) if obs.board[int(col)] == 0])
+
+    return _function
