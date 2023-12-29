@@ -63,3 +63,97 @@ def build_agent(model):
             return random.choice([col for col in range(config.columns) if obs.board[int(col)] == 0])
 
     return _function
+
+# Get new board with given piece dropped
+def drop_piece(grid, col, mark, config):
+    next_grid = grid.copy()
+    for row in range(config.rows-1, -1, -1):
+        if next_grid[row][col] == 0:
+            break
+    next_grid[row][col] = mark
+    return next_grid
+
+def legal_moves(grid, config):
+    return [col for col in range(config.columns) if grid[0, col] == 0]
+
+def is_terminal_window(window, config):
+    return window.count(1) == config.inarow or window.count(2) == config.inarow
+
+def is_terminal_grid(grid, config):
+    return check_winner(grid, config) != 0
+
+def check_window_winner(window, config):
+    if window.count(1) == config.inarow:
+        return 1
+    if window.count(2) == config.inarow:
+        return 2
+    else:
+        raise Exception("Winner not found")
+    
+def check_winner(grid, config):
+    # Check for win: horizontal, vertical, or diagonal
+    # horizontal 
+    for row in range(config.rows):
+        for col in range(config.columns-(config.inarow-1)):
+            window = list(grid[row, col:col+config.inarow])
+            if is_terminal_window(window, config):
+                return check_window_winner(window, config)
+    # vertical
+    for row in range(config.rows-(config.inarow-1)):
+        for col in range(config.columns):
+            window = list(grid[row:row+config.inarow, col])
+            if is_terminal_window(window, config):
+                return check_window_winner(window, config)
+    # positive diagonal
+    for row in range(config.rows-(config.inarow-1)):
+        for col in range(config.columns-(config.inarow-1)):
+            window = list(grid[range(row, row+config.inarow), range(col, col+config.inarow)])
+            if is_terminal_window(window, config):
+                return check_window_winner(window, config)
+    # negative diagonal
+    for row in range(config.inarow-1, config.rows):
+        for col in range(config.columns-(config.inarow-1)):
+            window = list(grid[range(row, row-config.inarow, -1), range(col, col+config.inarow)])
+            if is_terminal_window(window, config):
+                return check_window_winner(window, config)
+    # Check for draw 
+    if list(grid[0, :]).count(0) == 0:
+        return 3
+    
+    return 0
+
+def score_game(grid, config):
+        # Check for win: horizontal, vertical, or diagonal
+    # horizontal 
+    for row in range(config.rows):
+        for col in range(config.columns-(config.inarow-1)):
+            window = list(grid[row, col:col+config.inarow])
+            if is_terminal_window(window, config):
+                winner = check_window_winner(window, config)
+                return 1 if winner == 1 else -1
+    # vertical
+    for row in range(config.rows-(config.inarow-1)):
+        for col in range(config.columns):
+            window = list(grid[row:row+config.inarow, col])
+            if is_terminal_window(window, config):
+                winner = check_window_winner(window, config)
+                return 1 if winner == 1 else -1
+    # positive diagonal
+    for row in range(config.rows-(config.inarow-1)):
+        for col in range(config.columns-(config.inarow-1)):
+            window = list(grid[range(row, row+config.inarow), range(col, col+config.inarow)])
+            if is_terminal_window(window, config):
+                winner = check_window_winner(window, config)
+                return 1 if winner == 1 else -1
+    # negative diagonal
+    for row in range(config.inarow-1, config.rows):
+        for col in range(config.columns-(config.inarow-1)):
+            window = list(grid[range(row, row-config.inarow, -1), range(col, col+config.inarow)])
+            if is_terminal_window(window, config):
+                winner = check_window_winner(window, config)
+                return 1 if winner == 1 else -1
+    # Check for draw 
+    if list(grid[0, :]).count(0) == 0:
+        return 0
+    
+    return 0
