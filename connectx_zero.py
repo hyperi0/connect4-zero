@@ -1,17 +1,54 @@
 import mcts
+import connectx
+import random
 import numpy as np
 import keras
 from keras import layers
+from collections import deque
+
 
 class connectx_agent():
-    def __init__():
-        pass
+    def __init__(
+            self,
+            env,
+            n_sims_train,
+            cpuct,
+    ):
+        self.env = env
+        self.n_sims_train = n_sims_train
+        self.cpuct = cpuct
+        self.config = env.configuration
+        self.nnet = None
 
-    def execute_episode():
-        pass
-
-    def train(self, n_iters, n_eps, max_memory):
-        pass
+    def train(self, n_iters, n_eps, max_memory=1000):
+        self.nnet = connectx_cnn(
+            input_shape = (1, self.config.rows, self.config.columns),
+            num_actions = self.config.columns
+        )
+        examples = deque(maxlen=max_memory)
+        for i in range(n_iters):
+            for e in range(n_eps):
+                examples.append(self.executeEpisode())
+        self.nnet.learn(examples)
+        
+    def execute_episode(self):
+        examples = []
+        s = connectx.empty_grid(self.config)
+        mark = 1
+        tree = mcts(s, self.env, self.nnet, self.c_puct)
+        
+        while True:
+            for _ in range(self.n_sims_train):
+                tree.search(s, mark)
+            action_probs = mcts.pi(s)
+            examples.append([s, action_probs])
+            a = random.choice(action_probs.keys(), action_probs.values())
+            s = connectx.drop_piece(s, a, mark, self.config)
+            if connectx.is_terminal_grid(s):
+                reward = connectx.score_game(s, self.config)
+                for ex in examples:
+                    ex.append(reward)
+                return examples
 
 class connectx_cnn():
     def __init__(
@@ -21,7 +58,7 @@ class connectx_cnn():
     ):
         self.input_shape = input_shape
         self.num_actions = num_actions
-        self.nnet = None
+        self.nnet = self.init_net()
     
     def init_net(self):
         inputs = keras.Input(shape=self.input_shape)
@@ -33,5 +70,4 @@ class connectx_cnn():
         action_probs = layers.Dense(self.num_actions, activation="softmax")(x)
         value = layers.Dense(1)(x)
         outputs = layers.Concatenate()([action_probs, value])
-
         self.nnet = keras.Model(inputs=inputs, outputs=outputs)

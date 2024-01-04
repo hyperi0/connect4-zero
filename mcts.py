@@ -46,3 +46,7 @@ class mcts():
         self.Q[s][a] = (self.N[s][a] * self.Q[s][a] + v) / (1 + self.N[s][a])
         self.N[s][a] += 1
         return -v
+    
+    def pi(self, s):
+        total_counts = sum(self.N[s].values())
+        return {a: self.N[s][a] / total_counts for a in self.N[s].keys()}

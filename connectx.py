@@ -157,3 +157,6 @@ def score_game(grid, config):
         return 0
     
     return 0
+
+def empty_grid(config):
+    return np.zeros((config.rows, config.columns))
