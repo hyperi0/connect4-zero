@@ -28,10 +28,12 @@ class mcts():
             self.visited.append(s)
             # self.P[s], v = self.nnet.predict(s) #TODO
             # temporary pi and v until i finish nnet
-            legal_moves = connectx.legal_moves(np.asarray(s), self.config)
-            legal_mask = connectx.legal_moves_mask(np.asarray(s), self.config)
+            legal_moves = connectx.legal_moves(s, self.config)
+            legal_mask = connectx.legal_moves_mask(s, self.config)
             probs = [1 / len(legal_moves) for i in range(self.config.columns)]
             self.P[s] = [prob * mask for prob, mask in zip(probs, legal_mask)]
+            self.N[s] = [0 for _ in range(self.config.columns)]
+            self.Q[s] = [0 for _ in range(self.config.columns)]
             v = .5
             return v
         

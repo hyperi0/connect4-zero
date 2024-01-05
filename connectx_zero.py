@@ -20,9 +20,9 @@ class connectx_agent():
         self.config = env.configuration
         self.nnet = None
 
-    def train(self, n_iters, n_eps, max_memory=1000):
+    def train(self, n_iters=10, n_eps=100, max_memory=1000):
         self.nnet = connectx_cnn(
-            input_shape = (1, self.config.rows, self.config.columns),
+            input_shape = (self.config.rows, self.config.columns, 1),
             num_actions = self.config.columns
         )
         examples = deque(maxlen=max_memory)
@@ -62,12 +62,15 @@ class connectx_cnn():
     
     def init_net(self):
         inputs = keras.Input(shape=self.input_shape)
-        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(x)
+        x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(inputs)
         x = layers.MaxPooling2D(pool_size=(2,2))(x)
-        x = layers.Conv2D(filters=64, kernel_size=3, activation="relu")(x)
-        x = layers.MaxPooling2D(pool_size=(2,2))(x)
+        #x = layers.Conv2D(filters=64, kernel_size=3, activation="relu")(x)
+        #x = layers.MaxPooling2D(pool_size=(2,2))(x)
         x = layers.Flatten()(x)
         action_probs = layers.Dense(self.num_actions, activation="softmax")(x)
         value = layers.Dense(1)(x)
         outputs = layers.Concatenate()([action_probs, value])
         self.nnet = keras.Model(inputs=inputs, outputs=outputs)
+
+    def learn(self, examples):
+        pass
