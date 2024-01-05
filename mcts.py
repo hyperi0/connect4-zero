@@ -26,7 +26,13 @@ class mcts():
         # first visit: initialize to neural net's predicted action probs and value
         if s not in self.visited:
             self.visited.append(s)
-            self.P[s], v = self.nnet.predict(s) #TODO
+            # self.P[s], v = self.nnet.predict(s) #TODO
+            # temporary pi and v until i finish nnet
+            legal_moves = connectx.legal_moves(np.asarray(s), self.config)
+            legal_mask = connectx.legal_moves_mask(np.asarray(s), self.config)
+            probs = [1 / len(legal_moves) for i in range(self.config.columns)]
+            self.P[s] = [prob * mask for prob, mask in zip(probs, legal_mask)]
+            v = .5
             return v
         
         # choose action with best upper confidence bound

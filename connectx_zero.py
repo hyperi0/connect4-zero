@@ -29,7 +29,7 @@ class connectx_agent():
         for i in range(n_iters):
             for e in range(n_eps):
                 examples.append(self.executeEpisode())
-        self.nnet.learn(examples)
+            self.nnet.learn(examples)
         
     def execute_episode(self):
         examples = []

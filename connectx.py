@@ -159,4 +159,12 @@ def score_game(grid, config):
     return 0
 
 def empty_grid(config):
-    return np.zeros((config.rows, config.columns))
+    return np.zeros((config.rows, config.columns), dtype=int)
+
+def grid_to_tuple(grid):
+    return tuple(map(tuple, grid))
+
+def legal_moves_mask(grid, config):
+    moves = legal_moves(grid, config)
+    mask = [1 if i in moves else 0 for i in range(config.columns)]
+    return mask
