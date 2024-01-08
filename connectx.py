@@ -77,7 +77,7 @@ def legal_moves(grid, config):
     return [col for col in range(config.columns) if grid[0][col] == 0]
 
 def is_terminal_window(window, config):
-    return window.count(1) == config.inarow or window.count(2) == config.inarow
+    return window.count(1) == config.inarow or window.count(-1) == config.inarow
 
 def is_terminal_grid(grid, config):
     return check_winner(grid, config) != 0
@@ -85,8 +85,8 @@ def is_terminal_grid(grid, config):
 def check_window_winner(window, config):
     if window.count(1) == config.inarow:
         return 1
-    if window.count(2) == config.inarow:
-        return 2
+    if window.count(-1) == config.inarow:
+        return -1
     else:
         raise Exception("Winner not found")
     
@@ -167,3 +167,6 @@ def legal_moves_mask(grid, config):
     moves = legal_moves(grid, config)
     mask = [1 if i in moves else 0 for i in range(config.columns)]
     return mask
+
+def reverse_grid(grid):
+    return tuple(map(tuple, (-1*np.asarray(grid))))

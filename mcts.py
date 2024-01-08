@@ -2,8 +2,7 @@ import math
 import connectx
 import numpy as np
 
-class mcts():
-
+class MCTS():
     def __init__(self, root, env, nnet, c_puct):
         self.root = root
         self.env = env
@@ -47,8 +46,9 @@ class mcts():
         a = best_a
 
         # calculate state value recursively
-        next_s = connectx.drop_piece(s, a, mark, self.config)
-        v = self.search(next_s, mark % 2 + 1)
+        next_s = connectx.drop_piece(s, a, 1, self.config)
+        next_s = connectx.reverse_grid(next_s)
+        v = self.search(next_s)
 
         # update node values from recursive search results
         self.Q[s][a] = (self.N[s][a] * self.Q[s][a] + v) / (1 + self.N[s][a])
@@ -56,5 +56,5 @@ class mcts():
         return -v
     
     def pi(self, s):
-        total_counts = sum(self.N[s].values())
-        return {a: self.N[s][a] / total_counts for a in self.N[s].keys()}
+        total_counts = sum(self.N[s])
+        return [self.N[s][a] / total_counts for a in range(self.config.columns)]
