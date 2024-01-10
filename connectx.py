@@ -169,4 +169,4 @@ def legal_moves_mask(grid, config):
     return mask
 
 def reverse_grid(grid):
-    return tuple(map(tuple, (-1*np.asarray(grid))))
+    return tuple(tuple(-piece for piece in row) for row in grid)

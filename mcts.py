@@ -18,22 +18,23 @@ class MCTS():
         normalized_counts = math.sqrt(sum(self.N[s])) / (1 + self.N[s][a])
         return self.Q[s][a] + self.c_puct * normalized_counts
     
-    def search(self, s, mark):
+    def search(self, s):
         if connectx.is_terminal_grid(s, self.config):
             return connectx.score_game(s, self.config)
         
         # first visit: initialize to neural net's predicted action probs and value
         if s not in self.visited:
             self.visited.append(s)
-            # self.P[s], v = self.nnet.predict(s) #TODO
+            prediction = self.nnet.predict(s)
+            pi, v = prediction["pi"], prediction["v"]
             # temporary pi and v until i finish nnet
-            legal_moves = connectx.legal_moves(s, self.config)
+            #legal_moves = connectx.legal_moves(s, self.config)
+            #probs = [1 / len(legal_moves) for i in range(self.config.columns)]
+            #self.P[s] = [prob * mask for prob, mask in zip(probs, legal_mask)]
             legal_mask = connectx.legal_moves_mask(s, self.config)
-            probs = [1 / len(legal_moves) for i in range(self.config.columns)]
-            self.P[s] = [prob * mask for prob, mask in zip(probs, legal_mask)]
+            self.P[s] = [p * mask for p, mask in zip(pi, legal_mask)]
             self.N[s] = [0 for _ in range(self.config.columns)]
             self.Q[s] = [0 for _ in range(self.config.columns)]
-            v = .5
             return v
         
         # choose action with best upper confidence bound
