@@ -1,10 +1,7 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-
-
     
 class PolicyNet(nn.Module):
     def __init__(self, rows=6, columns=7):
@@ -39,11 +36,12 @@ class ExperienceDataset(Dataset):
         return {'s': self.s[i], 'pi': self.pi[i], 'v': self.v[i]}
 
 class Policy():
-    def __init__(self, nnet):
-        self.nnet = nnet
+    def __init__(self, device='cpu'):
+        self.device = device
+        self.nnet = PolicyNet().to(device)
         
-    def train(self, examples, batch_size=64, epochs=5, lr=1e-2, device='cpu'):
-        train_dataset = ExperienceDataset(examples, device=device)
+    def train(self, examples, batch_size=64, epochs=5, lr=1e-2):
+        train_dataset = ExperienceDataset(examples, device=self.device)
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
         optimizer = torch.optim.Adam(self.nnet.parameters(), lr=lr)
         loss_fn_pi = torch.nn.CrossEntropyLoss()
@@ -58,5 +56,6 @@ class Policy():
                 optimizer.step()
 
     def predict(self, s):
-        input = torch.tensor(s).unsqueeze(0)
-        return self.nnet(input)
+        input = torch.tensor(s, dtype=torch.float).reshape((1,1,6,7)).to(self.device)
+        pi, v = self.nnet(input)
+        return pi[0].tolist(), v[0].item()

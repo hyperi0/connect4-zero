@@ -3,10 +3,10 @@ import connectx
 import numpy as np
 
 class MCTS():
-    def __init__(self, root, env, nnet, c_puct):
+    def __init__(self, root, env, policy, c_puct):
         self.root = root
         self.env = env
-        self.nnet = nnet
+        self.policy = policy
         self.c_puct = c_puct
         self.visited = []
         self.P = {}
@@ -25,15 +25,7 @@ class MCTS():
         # first visit: initialize to neural net's predicted action probs and value
         if s not in self.visited:
             self.visited.append(s)
-
-            #prediction = self.nnet.predict(s)
-            #pi, v = prediction["pi"], prediction["v"]
-
-            # temporary pi and v until i finish nnet (torch version)
-            legal_moves = connectx.legal_moves(s, self.config)
-            pi = [1 / len(legal_moves) for i in range(self.config.columns)]
-            v = .5
-            
+            pi, v = self.policy.predict(s)
             legal_mask = connectx.legal_moves_mask(s, self.config)
             self.P[s] = [p * mask for p, mask in zip(pi, legal_mask)]
             self.N[s] = [0 for _ in range(self.config.columns)]

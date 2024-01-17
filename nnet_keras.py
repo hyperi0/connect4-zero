@@ -2,7 +2,7 @@ import numpy as np
 import keras
 from keras import layers
 
-class PolicyNet():
+class Policy():
     def __init__(
             self,
             input_shape,
@@ -35,7 +35,7 @@ class PolicyNet():
         )
         self.nnet = nnet
 
-    def learn(self, examples):
+    def train(self, examples):
         s, pi, v = map(np.asarray, zip(*examples)) # I am so hip I have difficulty seeing over my pelvis.
         self.nnet.fit(
             x=s,
@@ -47,4 +47,5 @@ class PolicyNet():
     def predict(self, s):
         input = np.asarray(s).reshape(self.input_shape)
         input = np.expand_dims(input, 0)
-        return self.nnet(input)
+        prediction = self.nnet(input)
+        return prediction["pi"], prediction["v"]
