@@ -25,12 +25,15 @@ class MCTS():
         # first visit: initialize to neural net's predicted action probs and value
         if s not in self.visited:
             self.visited.append(s)
-            prediction = self.nnet.predict(s)
-            pi, v = prediction["pi"], prediction["v"]
-            # temporary pi and v until i finish nnet
-            #legal_moves = connectx.legal_moves(s, self.config)
-            #probs = [1 / len(legal_moves) for i in range(self.config.columns)]
-            #self.P[s] = [prob * mask for prob, mask in zip(probs, legal_mask)]
+
+            #prediction = self.nnet.predict(s)
+            #pi, v = prediction["pi"], prediction["v"]
+
+            # temporary pi and v until i finish nnet (torch version)
+            legal_moves = connectx.legal_moves(s, self.config)
+            pi = [1 / len(legal_moves) for i in range(self.config.columns)]
+            v = .5
+            
             legal_mask = connectx.legal_moves_mask(s, self.config)
             self.P[s] = [p * mask for p, mask in zip(pi, legal_mask)]
             self.N[s] = [0 for _ in range(self.config.columns)]
@@ -59,3 +62,9 @@ class MCTS():
     def pi(self, s):
         total_counts = sum(self.N[s])
         return [self.N[s][a] / total_counts for a in range(self.config.columns)]
+    
+    def best_action(self, s):
+        return np.argmax(self.N[s])
+    
+    def stochastic_action(self, s):
+        return np.random.choice(self.config.columns, p=self.pi(s))

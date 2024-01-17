@@ -8,7 +8,7 @@ class PolicyNet():
             input_shape,
             num_actions,
             epochs=10,
-            batch_size=64
+            batch_size=32
     ):
         self.input_shape = input_shape
         self.num_actions = num_actions
@@ -20,10 +20,9 @@ class PolicyNet():
     def init_net(self):
         inputs = keras.Input(shape=self.input_shape)
         x = layers.Conv2D(filters=32, kernel_size=3, activation="relu")(inputs)
-        x = layers.MaxPooling2D(pool_size=(2,2))(x)
         x = layers.Conv2D(filters=64, kernel_size=3, activation="relu")(x)
-        x = layers.MaxPooling2D(pool_size=(2,2))(x)
         x = layers.Flatten()(x)
+        x = layers.Dense(units=64, activation="relu")(x)
         action_probs = layers.Dense(self.num_actions, activation="softmax")(x)
         value = layers.Dense(1)(x)
         outputs = {"pi": action_probs, "v": value}
@@ -37,7 +36,7 @@ class PolicyNet():
         self.nnet = nnet
 
     def learn(self, examples):
-        s, pi, v = np.transpose(examples)
+        s, pi, v = map(np.asarray, zip(*examples)) # I am so hip I have difficulty seeing over my pelvis.
         self.nnet.fit(
             x=s,
             y={"pi": pi, "v": v},
@@ -46,4 +45,6 @@ class PolicyNet():
         )
 
     def predict(self, s):
-        return self.nnet(np.asarray(s))
+        input = np.asarray(s).reshape(self.input_shape)
+        input = np.expand_dims(input, 0)
+        return self.nnet(input)
