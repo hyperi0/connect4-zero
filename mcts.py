@@ -3,20 +3,18 @@ import connectx
 import numpy as np
 
 class MCTS():
-    def __init__(self, root, env, policy, c_puct):
-        self.root = root
-        self.env = env
+    def __init__(self, config, policy, c_puct):
+        self.config = config
         self.policy = policy
         self.c_puct = c_puct
         self.visited = []
         self.P = {}
         self.N = {}
         self.Q = {}
-        self.config = self.env.configuration
 
     def u_value(self, s, a):
         normalized_counts = math.sqrt(sum(self.N[s])) / (1 + self.N[s][a])
-        return self.Q[s][a] + self.c_puct * normalized_counts
+        return self.Q[s][a] + self.c_puct * self.P[s][a] * normalized_counts
     
     def search(self, s):
         if connectx.is_terminal_grid(s, self.config):

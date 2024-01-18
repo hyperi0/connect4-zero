@@ -50,7 +50,7 @@ class Policy():
             for batch in train_dataloader:
                 s, pi, v = batch['s'], batch['pi'], batch['v']
                 pi_pred, v_pred = self.nnet(s)
-                loss = loss_fn_pi(pi_pred, pi) + loss_fn_v(v_pred, v)
+                loss = loss_fn_pi(pi_pred, pi) + loss_fn_v(v_pred.squeeze(), v)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
