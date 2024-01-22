@@ -4,6 +4,7 @@ import connectx
 from mcts import MCTS
 from nnet_torch import Policy
 from tqdm import trange
+import logging
 
 class ConnectXAgent():
     def __init__(
@@ -11,13 +12,16 @@ class ConnectXAgent():
             config,
             n_sims_train=10,
             c_puct=1,
-            device='cuda'
+            device='cuda',
+            log_level=logging.INFO,
+            log_file='agent.log'
     ):
         self.config = config
         self.n_sims_train = n_sims_train
         self.c_puct = c_puct
         self.policy = Policy(device)
         self.tree = MCTS(self.config, self.policy, self.c_puct)
+        logging.basicConfig(filename=log_file, level=log_level)
 
     def train(self, n_iters=10, n_eps=100, max_memory=1000):
         examples = deque(maxlen=max_memory)
@@ -64,6 +68,22 @@ class ConnectXAgent():
             return self.tree.best_action(s)
         else:
             return self.tree.stochastic_action(s)
+        
+    def move_probabilities_values(self, board, mark, n_sims=10):
+        board = [-1 if token == 2 else token for token in board]
+        board = np.reshape(board, (self.config.rows, self.config.columns))
+        if mark == 2:
+            board = -board
+        s = tuple(map(tuple, board))
+        for _ in range(n_sims):
+            self.tree.search(s)
+        info = {
+            "P": self.tree.P[s],
+            "Q": self.tree.Q[s],
+            "N": self.tree.N[s],
+            "pi": self.tree.pi(s)
+        }
+        return info
 
     def load_policy(self, state_dict):
         self.policy.nnet.load_state_dict(state_dict)
