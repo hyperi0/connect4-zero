@@ -3,22 +3,65 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
     
-class PolicyNet(nn.Module):
-    def __init__(self, rows=6, columns=7):
+class ResidualBlock(nn.Module):
+    def __init__(self, n_channels=32, kernel_size=3, stride=1, padding='same'):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3)
-        self.conv2 = nn.Conv2d(32, 32, 3)
-        self.fc = nn.Linear(32 * (columns - 4) * (rows - 4), 64)
-        self.pi_fc = nn.Linear(64, columns)
-        self.v = nn.Linear(64, 1)
-    
+        self.conv1 = nn.Conv2d(n_channels, n_channels, kernel_size, stride, padding)
+        self.conv2 = nn.Conv2d(n_channels, n_channels, kernel_size, stride, padding)
+        self.bn1 = nn.BatchNorm2d(n_channels)
+        self.bn2 = nn.BatchNorm2d(n_channels)
+
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = torch.flatten(x, 1)
-        x = F.relu(self.fc(x))
-        pi = F.log_softmax(self.pi_fc(x), dim=1)
-        v = torch.tanh(self.v(x))
+        residual = x
+        x = self.conv1(x)
+        x = F.relu(self.bn1(x))
+        x = self.conv2(x)
+        x = F.relu(self.bn2(x))
+        x += residual
+        x = F.relu(x)
+        return x
+    
+class PolicyNet(nn.Module):
+    def __init__(self, rows=6, columns=7, n_channels=32, n_res_blocks=3):
+        super().__init__()
+        # convolutional block
+        self.conv = nn.Conv2d(1, n_channels, 3, padding='same')
+        self.conv_bn = nn.BatchNorm2d(n_channels)
+        # residual blocks
+        self.res_blocks = nn.ModuleList()
+        for i in range(n_res_blocks):
+            self.res_blocks.append(ResidualBlock(n_channels=n_channels))
+        # policy head
+        self.policy_conv = nn.Conv2d(n_channels, 2, 1, padding='same')
+        self.policy_bn = nn.BatchNorm2d(2)
+        self.policy_fc = nn.Linear(n_channels * columns * rows / 4, columns)
+        # value head
+        self.value_conv = nn.Conv2d(n_channels, 1, padding='same')
+        self.value_bn = nn.BatchNorm2d(1)
+        self.value_fc = nn.Linear(n_channels * columns * rows, 256)
+        self.value_out = nn.Linear(256, 1)
+
+    def forward(self, x):
+        # convolutional block
+        x = self.conv(x)
+        x = self.conv_bn(x)
+        x = F.relu(x)
+        # residual blocks
+        x = self.res_blocks(x)
+        # policy head
+        pi = self.policy_conv(x)
+        pi = self.policy_bn(pi)
+        pi = F.relu(pi)
+        pi = self.policy_fc(pi)
+        pi = F.log_softmax(pi, dim=1)
+        # value head
+        v = self.value_conv(x)
+        v = self.value_bn(x)
+        v = F.relu(v)
+        v = self.value_fc(v)
+        v = F.relu(v)
+        v = self.value_out(v)
+        v = torch.tanh(v)
         return pi, v
     
 class ExperienceDataset(Dataset):
