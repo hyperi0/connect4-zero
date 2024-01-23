@@ -34,9 +34,9 @@ class PolicyNet(nn.Module):
         # policy head
         self.policy_conv = nn.Conv2d(n_channels, 2, 1, padding='same')
         self.policy_bn = nn.BatchNorm2d(2)
-        self.policy_fc = nn.Linear(n_channels * columns * rows / 4, columns)
+        self.policy_fc = nn.Linear(n_channels * columns * rows * 2, columns)
         # value head
-        self.value_conv = nn.Conv2d(n_channels, 1, padding='same')
+        self.value_conv = nn.Conv2d(n_channels, 1, 1, padding='same')
         self.value_bn = nn.BatchNorm2d(1)
         self.value_fc = nn.Linear(n_channels * columns * rows, 256)
         self.value_out = nn.Linear(256, 1)
@@ -47,7 +47,8 @@ class PolicyNet(nn.Module):
         x = self.conv_bn(x)
         x = F.relu(x)
         # residual blocks
-        x = self.res_blocks(x)
+        for block in self.res_blocks:
+            x = block(x)
         # policy head
         pi = self.policy_conv(x)
         pi = self.policy_bn(pi)
