@@ -1,5 +1,5 @@
 import math
-import connectx
+from connectx import *
 import numpy as np
 
 class MCTS():
@@ -17,14 +17,14 @@ class MCTS():
         return self.Q[s][a] + self.c_puct * self.P[s][a] * normalized_counts
     
     def search(self, s):
-        if connectx.is_terminal_grid(s, self.config):
-            return -connectx.score_game(s, self.config)
+        if is_terminal_grid(s, self.config):
+            return -score_game(s, self.config)
         
         # first visit: initialize to neural net's predicted action probs and value
         if s not in self.visited:
             self.visited.append(s)
             pi, v = self.policy.predict(s)
-            legal_mask = connectx.legal_moves_mask(s, self.config)
+            legal_mask = legal_moves_mask(s, self.config)
             self.P[s] = [p * mask for p, mask in zip(pi, legal_mask)]
             self.N[s] = [0 for _ in range(self.config.columns)]
             self.Q[s] = [0 for _ in range(self.config.columns)]
@@ -32,7 +32,7 @@ class MCTS():
         
         # choose action with best upper confidence bound
         max_u, best_a = -np.inf, -1
-        for a in connectx.legal_moves(s, self.config):
+        for a in legal_moves(s, self.config):
             u = self.u_value(s, a)
             if u > max_u:
                 max_u = u
@@ -40,8 +40,8 @@ class MCTS():
         a = best_a
 
         # calculate state value recursively
-        next_s = connectx.drop_piece(s, a, 1, self.config)
-        next_s = connectx.reverse_grid(next_s)
+        next_s = drop_piece(s, a, 1, self.config)
+        next_s = reverse_grid(next_s)
         v = self.search(next_s)
 
         # update node values from recursive search results
