@@ -22,6 +22,7 @@ class ConnectXAgent():
         self.policy = Policy(device)
         self.tree = MCTS(self.config, self.policy, self.c_puct)
         logging.basicConfig(filename=log_file, level=log_level)
+        self.examples = []
 
     def train(self, n_iters=10, n_eps=100, max_memory=1000):
         examples = deque(maxlen=max_memory)
@@ -51,6 +52,7 @@ class ConnectXAgent():
                 for ex in examples:
                     ex.append(reward * mark)
                     mark *= -1
+                self.examples = examples
                 return examples
             else: # swap board perspective
                 s = connectx.reverse_grid(s)

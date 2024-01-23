@@ -18,7 +18,7 @@ class MCTS():
     
     def search(self, s):
         if connectx.is_terminal_grid(s, self.config):
-            return connectx.score_game(s, self.config)
+            return -connectx.score_game(s, self.config)
         
         # first visit: initialize to neural net's predicted action probs and value
         if s not in self.visited:
@@ -28,7 +28,7 @@ class MCTS():
             self.P[s] = [p * mask for p, mask in zip(pi, legal_mask)]
             self.N[s] = [0 for _ in range(self.config.columns)]
             self.Q[s] = [0 for _ in range(self.config.columns)]
-            return v
+            return -v
         
         # choose action with best upper confidence bound
         max_u, best_a = -np.inf, -1
